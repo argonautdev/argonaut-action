@@ -22,14 +22,14 @@ runs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        path: user-repo
+        path: /user-repo
         ref: ${{ inputs.ref }}
     - name: Fetch repo
       uses: actions/checkout@v3
       with:
-        path: argoanut-action
+        path: /argoanut-action
         ref: main
-        repository: argonautdev/arognaut-action
+        repository: argonautdev/argonaut-action
         submodules: 'recursive'
     - name: Run Dagger pipeline
       run: ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run ci/main.go test /user-repo
