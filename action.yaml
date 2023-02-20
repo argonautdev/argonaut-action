@@ -27,7 +27,7 @@ runs:
     - name: Fetch repo
       uses: actions/checkout@v3
       with:
-        path: argoanut-action
+        path: argonaut-action
         ref: main
         repository: argonautdev/argonaut-action
         submodules: 'recursive'
