@@ -32,6 +32,7 @@ runs:
         repository: argonautdev/argonaut-action
         submodules: 'recursive'
     - name: Run Dagger pipeline
-      run: ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run ci/main.go test /user-repo
+      run: |
+        ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run argonaut-action/ci/main.go test /user-repo
       shell: bash
 
