@@ -37,6 +37,6 @@ runs:
         pwd
         ls -lrt
         cd argonaut-action/ci/
-        ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run argonaut-action/ci/main.go test ../../user-repo
+        ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run main.go test ../../user-repo
       shell: bash
 
