@@ -84,7 +84,7 @@ func getClientAuthInfo(key, secret string) (*GetClientIDAndSecretResponse, error
 	}
 	if resp.IsError() {
 		zap.S().Errorf("Could not send request. Err: %v", string(resp.Body()))
-		return nil, errors.New("error status code")
+		return nil, errors.New("authentication error : " + string(resp.Body()))
 	}
 
 	var getClientIDAndSecretResponse GetClientIDAndSecretResponse

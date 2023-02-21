@@ -36,7 +36,8 @@ runs:
       run: |
         pwd
         ls -lrt
+        rdir=$(pwd)
         cd argonaut-action/ci/
-        ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run *.go test ./../../user-repo
+        ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run *.go test ${rdir}/user-repo
       shell: bash
 

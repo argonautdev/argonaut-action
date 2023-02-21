@@ -15,6 +15,7 @@ import (
 func main() {
 	if err := build(context.Background()); err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 
@@ -26,8 +27,7 @@ func build(ctx context.Context) error {
 	// initialize Dagger client
 	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
-		fmt.Println("dagger client connect failed")
-		panic(err)
+		return err
 	}
 	defer client.Close()
 
@@ -52,7 +52,6 @@ func build(ctx context.Context) error {
 
 	mc, err := GetMidgardClient(argKey, argSecret)
 	if err != nil {
-		fmt.Println("GetMidgardClient failed")
 		return err
 	}
 
@@ -74,7 +73,7 @@ func build(ctx context.Context) error {
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath}).
 		Publish(ctx, fmt.Sprintf("ttl.sh/hello-dagger-%.0f", math.Floor(rand.Float64()*10000000)))
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fmt.Printf("Published image to: %v\n", ref)
