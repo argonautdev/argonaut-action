@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/pretty"
@@ -22,10 +21,15 @@ type ArgoClientImpl struct {
 }
 
 func (c *ArgoClientImpl) FetchBuildRunInfo(buildRunId string) (*BuildRunInfo, error) {
-	out := BuildRunInfo{}
-	resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/run/%s", buildRunId))
-	err = UnmarshalAndLog(resp, &out, err)
-	return &out, err
+	// Hardcoding response for testing purposes
+	out := BuildRunInfo{
+		Id:            buildRunId,
+		BuildConfigId: "test",
+		Status:        Running,
+	}
+	//resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/run/%s", buildRunId))
+	//err = UnmarshalAndLog(resp, &out, err)
+	return &out, nil
 }
 
 func (c *ArgoClientImpl) FetchBuildInfo(buildId string) (*BuildConfigInfo, error) {

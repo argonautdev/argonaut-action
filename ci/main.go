@@ -30,8 +30,8 @@ func build(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	buildId := os.Args[0]
-	if buildId == "" {
+	buildRunId := os.Args[0]
+	if buildRunId == "" {
 		return errors.New("argonaut build identifier is missing")
 	}
 
@@ -52,7 +52,12 @@ func build(ctx context.Context) error {
 		return err
 	}
 
-	buildInfo, err := mc.FetchBuildInfo(buildId)
+	buildRunInfo, err := mc.FetchBuildRunInfo(buildRunId)
+	if err != nil {
+		return err
+	}
+
+	buildInfo, err := mc.FetchBuildInfo(buildRunInfo.BuildConfigId)
 	if err != nil {
 		return err
 	}
