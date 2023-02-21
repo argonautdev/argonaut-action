@@ -26,19 +26,22 @@ func build(ctx context.Context) error {
 	// initialize Dagger client
 	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
+		fmt.Println("dagger client connect failed")
 		panic(err)
 	}
 	defer client.Close()
 
-	buildRunId := os.Args[0]
+	buildRunId := os.Args[1]
 	if buildRunId == "" {
 		return errors.New("argonaut build identifier is missing")
 	}
 
-	userRepoLoc := os.Args[1]
+	userRepoLoc := os.Args[2]
 	if userRepoLoc == "" {
 		return errors.New("user repo location missing")
 	}
+
+	fmt.Printf("buildRunId [%s] userRepoLoc [%s]", buildRunId, userRepoLoc)
 
 	argKey := os.Getenv("ARG_KEY")
 	argSecret := os.Getenv("ARG_SECRET")
@@ -49,6 +52,7 @@ func build(ctx context.Context) error {
 
 	mc, err := GetMidgardClient(argKey, argSecret)
 	if err != nil {
+		fmt.Println("GetMidgardClient failed")
 		return err
 	}
 
