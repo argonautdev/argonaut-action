@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/pretty"
@@ -21,57 +23,62 @@ type ArgoClientImpl struct {
 }
 
 func (c *ArgoClientImpl) FetchBuildRunInfo(buildRunId string) (*BuildRunInfo, error) {
-	// Hardcoding response for testing purposes
-	out := BuildRunInfo{
-		Id:            buildRunId,
-		BuildConfigId: "test",
-		Status:        Running,
-	}
-	//resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/run/%s", buildRunId))
-	//err = UnmarshalAndLog(resp, &out, err)
-	return &out, nil
+	out := BuildRunInfo{}
+	resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/run/%s", buildRunId))
+	err = UnmarshalAndLog(resp, &out, err)
+	return &out, err
 }
 
 func (c *ArgoClientImpl) FetchBuildInfo(buildId string) (*BuildConfigInfo, error) {
-	// Hardcoding response for testing purposes
-	out := BuildConfigInfo{
-		Id:        buildId,
-		Name:      "TEST",
-		BuildType: Docker,
-		Details: BuildConfigDetails{
-			OCIBuildDetails: &OCIBuildDetails{
-				DockerFilePath: "./Dockerfile",
-			},
-		},
-	}
-	//resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/%s", buildId))
-	//err = UnmarshalAndLog(resp, &out, err)
-	return &out, nil
+	out := BuildConfigInfo{}
+	resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/%s", buildId))
+	err = UnmarshalAndLog(resp, &out, err)
+	return &out, err
 }
 
 func (c *ArgoClientImpl) FetchContainerRegistryToken(crId string) (*RegistryToken, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func GetMidgardClient(key, secret string) (ArgoClient, error) {
+var argoClientInstance ArgoClient = nil
+
+func GetArgoClient() ArgoClient {
+	if argoClientInstance == nil {
+		panic("server client not initialized yet")
+	}
+	return argoClientInstance
+}
+
+func InitializeArgoClient(token string) (ArgoClient, error) {
 
 	argoClient := &ArgoClientImpl{Client: resty.New()}
 
-	clientAuthInfo, err := getClientAuthInfo(key, secret)
-	if err != nil {
-		zap.S().Errorf("Could not construct client (internal err). Err: %v", err)
-		return nil, err
+	switch {
+	case strings.HasPrefix(token, "FE-"):
+		key, secret, ok := ParseBasicAuth(strings.TrimPrefix(token, "FE-"))
+		if !ok {
+			return nil, errors.New("failed to parse auth token")
+		}
+		clientAuthInfo, err := getFEAuthInfo(key, secret)
+		if err != nil {
+			zap.S().Errorf("Could not construct client (internal err). Err: %v", err)
+			return nil, err
+		}
+		argoClient.clientAuthInfo = clientAuthInfo
+		argoClient.SetHeader("Authorization", clientAuthInfo.Accesstoken)
+	default:
+		return nil, errors.New("unknown auth scheme")
 	}
 
-	argoClient.clientAuthInfo = clientAuthInfo
+	argoClient.SetBaseURL(MIDGARD_URL)
 
-	argoClient.SetHeader("Authorization", clientAuthInfo.Accesstoken).SetBaseURL(MIDGARD_URL)
+	argoClientInstance = argoClient
 
 	return argoClient, nil
 
 }
 
-func getClientAuthInfo(key, secret string) (*GetClientIDAndSecretResponse, error) {
+func getFEAuthInfo(key, secret string) (*GetClientIDAndSecretResponse, error) {
 	resp, err := resty.New().SetBaseURL(FRONTEGG_URL).R().
 		SetBody(&ApiTokenConfigStruct{
 			ClientID:     key,

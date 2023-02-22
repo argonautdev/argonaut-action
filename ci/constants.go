@@ -1,7 +1,7 @@
 package main
 
 const (
-	MIDGARD_URL  = "https://c1b4-2405-201-6004-7855-99fc-c37d-9ef2-b902.in.ngrok.io"
+	MIDGARD_URL  = "https://9906-2405-201-6004-7855-99fc-c37d-9ef2-b902.in.ngrok.io"
 	FRONTEGG_URL = "https://argonaut-pp.frontegg.com"
 )
 

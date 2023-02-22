@@ -1,18 +1,21 @@
 name: 'argonaut-action'
-description: 'argoanut action for running build process'
+description: 'argonaut action for running ci task'
 inputs:
-  build-run-id:  
+  task-id:  
     description: 'argonaut unique build run id'
     required: true
+  task-name:
+    description: 'task name'
+    required: false
   ref:
     description: 'branch, tag, sha ref to perform build on'
+    required: true
+  arg-auth-token:  
+    description: 'temporary organization auth token for argonaut'
+    required: true
+  extra-args:
+    description: 'extra field that can used for future purpose, format : key1=value1,key2=value2,...'
     required: false
-  arg-key:  
-    description: 'argonaut organization key'
-    required: true
-  arg-secret:  
-    description: 'argonaut organization secret'
-    required: true
 runs:
   using: "composite"
   steps:
@@ -34,10 +37,8 @@ runs:
         submodules: 'recursive'
     - name: Run Dagger pipeline
       run: |
-        pwd
-        ls -lrt
-        rdir=$(pwd)
+        user_repo_dir_root=$(pwd)
         cd argonaut-action/ci/
-        ARG_KEY=${{ inputs.arg-key }} ARG_SECRET=${{ inputs.arg-secret }} go run *.go test ${rdir}/user-repo
+        ARG_AUTH_TOKEN=${{ inputs.arg-auth-token }} go run *.go ${{ inputs.task-id }} ${user_repo_dir_root}/user-repo
       shell: bash
 
