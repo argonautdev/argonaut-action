@@ -39,6 +39,6 @@ runs:
       run: |
         user_repo_dir_root=$(pwd)
         cd argonaut-action/ci/
-        ARG_AUTH_TOKEN=${{ inputs.arg-auth-token }} go run *.go ${{ inputs.task-id }} ${user_repo_dir_root}/user-repo
+        ARG_AUTH_TOKEN="${{ inputs.arg-auth-token }}" go run *.go ${{ inputs.task-id }} ${user_repo_dir_root}/user-repo
       shell: bash
 
