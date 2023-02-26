@@ -15,7 +15,7 @@ type ArgoClient interface {
 	FetchBuildRunInfo(buildRunId string) (*BuildRun, error)
 	FetchBuildInfo(buildId string) (*BuildConfig, error)
 	FetchContainerRegistryToken(crId string) (*RegistryToken, error)
-	BuildRunCallback(buildRunId string, payload BuildRunCallbackPayload) error
+	BuildRunCallback(buildRunId string, payload *BuildRunCallbackPayload) error
 }
 
 type ArgoClientImpl struct {
@@ -36,8 +36,8 @@ func (c *ArgoClientImpl) FetchBuildInfo(buildId string) (*BuildConfig, error) {
 	err = UnmarshalAndLog(resp, &out, err)
 	return &out, err
 }
-func (c *ArgoClientImpl) BuildRunCallback(buildRunId string, payload BuildRunCallbackPayload) error {
-	resp, err := c.R().SetBody(payload).Post(fmt.Sprintf("/api/v1/build/run/%s/callback", buildRunId))
+func (c *ArgoClientImpl) BuildRunCallback(buildRunId string, payload *BuildRunCallbackPayload) error {
+	resp, err := c.R().SetBody(*payload).Post(fmt.Sprintf("/api/v1/build/run/%s/callback", buildRunId))
 	err = UnmarshalAndLog(resp, map[string]interface{}{}, err)
 	return err
 }
