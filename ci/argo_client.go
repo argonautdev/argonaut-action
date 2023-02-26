@@ -12,9 +12,10 @@ import (
 )
 
 type ArgoClient interface {
-	FetchBuildRunInfo(buildRunId string) (*BuildRunInfo, error)
-	FetchBuildInfo(buildId string) (*BuildConfigInfo, error)
+	FetchBuildRunInfo(buildRunId string) (*BuildRun, error)
+	FetchBuildInfo(buildId string) (*BuildConfig, error)
 	FetchContainerRegistryToken(crId string) (*RegistryToken, error)
+	BuildRunCallback(buildRunId string, payload BuildRunCallbackPayload) error
 }
 
 type ArgoClientImpl struct {
@@ -22,18 +23,23 @@ type ArgoClientImpl struct {
 	clientAuthInfo *GetClientIDAndSecretResponse
 }
 
-func (c *ArgoClientImpl) FetchBuildRunInfo(buildRunId string) (*BuildRunInfo, error) {
-	out := BuildRunInfo{}
+func (c *ArgoClientImpl) FetchBuildRunInfo(buildRunId string) (*BuildRun, error) {
+	out := BuildRun{}
 	resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/run/%s", buildRunId))
 	err = UnmarshalAndLog(resp, &out, err)
 	return &out, err
 }
 
-func (c *ArgoClientImpl) FetchBuildInfo(buildId string) (*BuildConfigInfo, error) {
-	out := BuildConfigInfo{}
+func (c *ArgoClientImpl) FetchBuildInfo(buildId string) (*BuildConfig, error) {
+	out := BuildConfig{}
 	resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/%s", buildId))
 	err = UnmarshalAndLog(resp, &out, err)
 	return &out, err
+}
+func (c *ArgoClientImpl) BuildRunCallback(buildRunId string, payload BuildRunCallbackPayload) error {
+	resp, err := c.R().SetBody(payload).Post(fmt.Sprintf("/api/v1/build/run/%s/callback", buildRunId))
+	err = UnmarshalAndLog(resp, map[string]interface{}{}, err)
+	return err
 }
 
 func (c *ArgoClientImpl) FetchContainerRegistryToken(crId string) (*RegistryToken, error) {
@@ -71,6 +77,39 @@ func InitializeArgoClient(token string) (ArgoClient, error) {
 	}
 
 	argoClient.SetBaseURL(MIDGARD_URL)
+
+	argoClient.SetRetryCount(2).
+		AddRetryCondition(func(res *resty.Response, reqErr error) bool {
+			zap.S().Info("Trace Info : ")
+			if res != nil && res.Request != nil {
+				ti := res.Request.TraceInfo()
+				zap.S().Infof("  Content size  : %v", res.Request.Header["Content-Length"])
+				zap.S().Infof("  DNSLookup     : %v", ti.DNSLookup)
+				zap.S().Infof("  ConnTime      : %v", ti.ConnTime)
+				zap.S().Infof("  TCPConnTime   : %v", ti.TCPConnTime)
+				zap.S().Infof("  TLSHandshake  : %v", ti.TLSHandshake)
+				zap.S().Infof("  ServerTime    : %v", ti.ServerTime)
+				zap.S().Infof("  ResponseTime  : %v", ti.ResponseTime)
+				zap.S().Infof("  TotalTime     : %v", ti.TotalTime)
+				zap.S().Infof("  IsConnReused  : %v", ti.IsConnReused)
+				zap.S().Infof("  IsConnWasIdle : %v", ti.IsConnWasIdle)
+				zap.S().Infof("  ConnIdleTime  : %v", ti.ConnIdleTime)
+
+				zap.S().Infof("  Resp Time       :", res.Time())
+				zap.S().Infof("  Resp Received At:", res.ReceivedAt())
+			}
+
+			if reqErr != nil {
+				zap.S().Errorf("Request trace info for err. Err: %v", reqErr)
+				return true
+				// if errors.Is(reqErr, syscall.ECONNRESET) {
+				// 	zap.S().Error("  Retrying Request!")
+				// 	return true
+				// }
+			}
+			return false
+		},
+		).EnableTrace().SetContentLength(true).SetRetryWaitTime(1000)
 
 	argoClientInstance = argoClient
 
