@@ -20,17 +20,20 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	buildRunInfo, err := GetArgoClient().FetchBuildRunInfo(buildRunId)
 	if err != nil {
+		callbackPayload.Status = Failed
 		return err
 	}
 
 	buildInfo, err := GetArgoClient().FetchBuildInfo(buildRunInfo.BuildConfigId)
 	if err != nil {
+		callbackPayload.Status = Failed
 		return err
 	}
 
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
+		callbackPayload.Status = Failed
 		return err
 	}
 	defer client.Close()
