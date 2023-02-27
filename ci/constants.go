@@ -2,7 +2,7 @@ package main
 
 const (
 	MIDGARD_URL  = "https://midgard-1.pp.argonaut.live"
-	FRONTEGG_URL = "https://argonaut-pp.frontegg.com"
+	FRONTEGG_URL = "https://argonaut1-pp.frontegg.com"
 )
 
 type BuildType string
