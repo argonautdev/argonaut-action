@@ -14,7 +14,8 @@ import (
 type ArgoClient interface {
 	FetchBuildRunInfo(buildRunId string) (*BuildRun, error)
 	FetchBuildInfo(buildId string) (*BuildConfig, error)
-	FetchContainerRegistryToken(crId string) (*RegistryToken, error)
+	FetchContainerRegistryAccess(crId string) (*RegistryAccess, error)
+	FetchBuildTimeSecrets(buildConfigId string) (*Secrets, error)
 	BuildRunCallback(buildRunId string, payload *BuildRunCallbackPayload) error
 }
 
@@ -42,8 +43,18 @@ func (c *ArgoClientImpl) BuildRunCallback(buildRunId string, payload *BuildRunCa
 	return err
 }
 
-func (c *ArgoClientImpl) FetchContainerRegistryToken(crId string) (*RegistryToken, error) {
-	panic("not implemented") // TODO: Implement
+func (c *ArgoClientImpl) FetchContainerRegistryAccess(crId string) (*RegistryAccess, error) {
+	out := RegistryAccess{}
+	resp, err := c.R().Get(fmt.Sprintf("/api/v1/registries/%s/access", crId))
+	err = UnmarshalAndLog(resp, &out, err)
+	return &out, err
+}
+
+func (c *ArgoClientImpl) FetchBuildTimeSecrets(buildConfigId string) (*Secrets, error) {
+	out := Secrets{}
+	resp, err := c.R().Get(fmt.Sprintf("/api/v1/secrets", buildConfigId))
+	err = UnmarshalAndLog(resp, &out, err)
+	return &out, err
 }
 
 var argoClientInstance ArgoClient = nil

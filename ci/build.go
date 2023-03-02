@@ -12,6 +12,8 @@ import (
 
 func build(context context.Context, buildRunId string, userRepoLoc string) error {
 
+	fmt.Print("build task started!!")
+
 	callbackPayload := &BuildRunCallbackPayload{
 		ImageTag: "SHORT_SHA_TAG",
 	}
@@ -25,6 +27,12 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	}
 
 	buildInfo, err := GetArgoClient().FetchBuildInfo(buildRunInfo.BuildConfigId)
+	if err != nil {
+		callbackPayload.Status = Failed
+		return err
+	}
+
+	crAccess, err := GetArgoClient().FetchContainerRegistryAccess(buildInfo.ArtifactoryId)
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
@@ -44,7 +52,8 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	ref, err := client.Container().
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath}).
-		Publish(context, fmt.Sprintf("ttl.sh/hello-dagger-%.0f", math.Floor(rand.Float64()*10000000)))
+		WithExec([]string{"docker", "login", "-u", crAccess.Username, "-p", crAccess.Password, crAccess.Url}).
+		Publish(context, fmt.Sprintf("%s/%s-%.0f", crAccess.Url, buildInfo.Name, math.Floor(rand.Float64()*10000000)))
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err

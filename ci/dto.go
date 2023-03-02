@@ -78,5 +78,14 @@ type BuildRunCallbackPayload struct {
 
 // ************* Container Registry ************
 
-type RegistryToken struct {
+type RegistryAccess struct {
+	Username             string     `json:"username"`
+	Password             string     `json:"password"`
+	Url                  string     `json:"url"`
+	ExpiresAt            *time.Time `json:"expires_at"`
+	RegistryOrganization string     `json:"registry_organization"`
+}
+
+type Secrets struct {
+	
 }
