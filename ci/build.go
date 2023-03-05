@@ -6,6 +6,8 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"os/exec"
+	"strings"
 
 	"dagger.io/dagger"
 )
@@ -38,6 +40,15 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		return err
 	}
 
+	fmt.Println("cr access response : ", *crAccess)
+
+	execCmd := exec.CommandContext(context, "docker", "login", "--username", crAccess.Username, "--password", crAccess.Password, strings.TrimPrefix(crAccess.Url, "https://"))
+	out, err := execCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf(string(out))
+	}
+	fmt.Printf(string(out))
+
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
@@ -52,8 +63,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	ref, err := client.Container().
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath}).
-		WithExec([]string{"docker", "login", "-u", crAccess.Username, "-p", crAccess.Password, crAccess.Url}).
-		Publish(context, fmt.Sprintf("%s/%s-%.0f", crAccess.Url, buildInfo.Name, math.Floor(rand.Float64()*10000000)))
+		Publish(context, fmt.Sprintf("%s/%s/%s:%.0f", strings.TrimPrefix(crAccess.Url, "https://"), "argonautdev", buildInfo.Name, math.Floor(rand.Float64()*10000000)))
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
