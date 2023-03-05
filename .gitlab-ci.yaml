@@ -1,25 +1,23 @@
 variables:
   task_id:  
     description: 'argonaut unique build run id'
-    required: true
   task_name:
     description: 'task name'
-    required: false
   ref:
     description: 'branch, tag, sha ref to perform build on'
-    required: true
   arg_auth_token:  
     description: 'temporary organization auth token for argonaut'
-    required: true
   extra_args:
     description: 'extra field that can used for future purpose, format : key1=value1,key2=value2,...'
-    required: false
 
 stages:
   - dagger
 
 dagger-execute:
   stage: dagger
+  before_script:
+    - apk update
+    - apk add git
   image:
     name: golang:alpine
   services:
@@ -28,7 +26,9 @@ dagger-execute:
     - ls -lrt
     - pwd
     - user_repo_dir_root=$(pwd)
-    - cd ..
-    - git clone git@github.com:argonautdev/argonaut-action.git
+    - cd ../..
+    - pwd
+    - mkdir -m 777 argonaut-action
+    - git clone -b main https://github.com/argonautdev/argonaut-action.git
     - cd argonaut-action/ci/
-    - ARG_AUTH_TOKEN="${{ inputs.arg-auth-token }}" go run *.go ${{ inputs.task-id }} ${user_repo_dir_root}
+    - ARG_AUTH_TOKEN="$arg_auth_token" go run *.go $task_id ${user_repo_dir_root}

@@ -28,11 +28,14 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		return err
 	}
 
+	fmt.Println("build run info call success : ", *buildRunInfo)
+
 	buildInfo, err := GetArgoClient().FetchBuildInfo(buildRunInfo.BuildConfigId)
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
 	}
+	fmt.Println("build info call success : ", *buildInfo)
 
 	crAccess, err := GetArgoClient().FetchContainerRegistryAccess(buildInfo.ArtifactoryId)
 	if err != nil {
@@ -40,14 +43,15 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		return err
 	}
 
-	fmt.Println("cr access response : ", *crAccess)
+	fmt.Println("cr access call success : ", *crAccess)
 
 	execCmd := exec.CommandContext(context, "docker", "login", "--username", crAccess.Username, "--password", crAccess.Password, strings.TrimPrefix(crAccess.Url, "https://"))
 	out, err := execCmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf(string(out))
 	}
-	fmt.Printf(string(out))
+
+	fmt.Println("docker login success : ", string(out))
 
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
