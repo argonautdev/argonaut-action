@@ -16,9 +16,9 @@ stages:
 dagger-execute:
   stage: dagger
   script:
-    - which docker
-    - which git
-    - which go
+    - docker version
+    - git version
+    - go version
     - ls -lrt
     - pwd
     - user_repo_dir_root=$(pwd)
