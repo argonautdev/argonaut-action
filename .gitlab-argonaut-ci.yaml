@@ -15,15 +15,10 @@ stages:
 
 dagger-execute:
   stage: dagger
-  before_script:
-    - apk update
-    - apk add git
-  image:
-    name: golang:alpine
-  services:
-    - docker:dind
   script:
-    - docker version
+    - which docker
+    - which git
+    - which go
     - ls -lrt
     - pwd
     - user_repo_dir_root=$(pwd)
