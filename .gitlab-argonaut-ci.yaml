@@ -18,11 +18,13 @@ dagger-execute:
   before_script:
     - apk update
     - apk add git
+    - which docker
   image:
     name: golang:alpine
   services:
     - docker:dind
   script:
+    - which docker
     - ls -lrt
     - pwd
     - user_repo_dir_root=$(pwd)
