@@ -15,15 +15,19 @@ stages:
 
 dagger-execute:
   stage: dagger
+  image:
+    name: golang:alpine
+  services:
+    - docker:dind
+  variables: 
+    DOCKER_HOST: tcp://docker:2375
+  before_script:
+    - apk update
+    - apk add git
+    - apk add docker-cli
   script:
-    - docker version
-    - git version
-    - go version
-    - ls -lrt
-    - pwd
     - user_repo_dir_root=$(pwd)
     - cd ../..
-    - pwd
     - mkdir -m 777 argonaut-action
     - git clone -b main https://github.com/argonautdev/argonaut-action.git
     - cd argonaut-action/ci/
