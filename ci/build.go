@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math"
-	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
@@ -16,8 +15,14 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	fmt.Print("build task started!!")
 
+	shortSha := os.Getenv("SHORT_SHA")
+
+	if shortSha == "" {
+		return errors.New("image tag not generated")
+	}
+
 	callbackPayload := &BuildRunCallbackPayload{
-		ImageTag: "SHORT_SHA_TAG",
+		ImageTag: shortSha,
 	}
 
 	defer GetArgoClient().BuildRunCallback(buildRunId, callbackPayload)
@@ -63,11 +68,14 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	//cache := client.CacheVolume("argonaut")
 
+	image := fmt.Sprintf("%s/%s", strings.TrimPrefix(crAccess.UrlWithPrefix, "https://"), buildInfo.Name)
+	callbackPayload.Image = image
+
 	contextDir := client.Host().Directory(userRepoLoc)
 
 	ref, err := client.Container().
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath}).
-		Publish(context, fmt.Sprintf("%s/%s/%s:%.0f", strings.TrimPrefix(crAccess.Url, "https://"), "argonautdev", buildInfo.Name, math.Floor(rand.Float64()*10000000)))
+		Publish(context, fmt.Sprintf("%s:%s", image, shortSha))
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err

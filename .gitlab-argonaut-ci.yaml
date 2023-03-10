@@ -26,9 +26,11 @@ dagger-execute:
     - apk add git
     - apk add docker-cli
   script:
-    - user_repo_dir_root=$(pwd)
-    - cd ../..
+    - user_repo_dir=$(pwd)
+    - SHORT_SHA=$(git rev-parse --short HEAD)
+    - pwd
+    - cd ..
     - mkdir -m 777 argonaut-action
     - git clone -b main https://github.com/argonautdev/argonaut-action.git
     - cd argonaut-action/ci/
-    - ARG_AUTH_TOKEN="$arg_auth_token" go run *.go $task_id ${user_repo_dir_root}
+    - ARG_AUTH_TOKEN="$arg_auth_token" go run *.go $task_id ${user_repo_dir}

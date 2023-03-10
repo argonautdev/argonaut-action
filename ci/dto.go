@@ -71,6 +71,7 @@ type RepoMeta struct {
 }
 
 type BuildRunCallbackPayload struct {
+	Image    string         `json:"image"`
 	ImageTag string         `json:"image_tag"`
 	Status   BuildRunStatus `json:"status"`
 	Error    string         `json:"error"`
@@ -79,13 +80,12 @@ type BuildRunCallbackPayload struct {
 // ************* Container Registry ************
 
 type RegistryAccess struct {
-	Username             string     `json:"username"`
-	Password             string     `json:"password"`
-	Url                  string     `json:"url"`
-	ExpiresAt            *time.Time `json:"expires_at"`
-	RegistryOrganization string     `json:"registry_organization"`
+	Username      string     `json:"username"`
+	Password      string     `json:"password"`
+	Url           string     `json:"url"`
+	ExpiresAt     *time.Time `json:"expires_at"`
+	UrlWithPrefix string     `json:"url_with_prefix"`
 }
 
 type Secrets struct {
-	
 }
