@@ -10,8 +10,11 @@ inputs:
   ref:
     description: 'branch, tag, sha ref to perform build on'
     required: true
-  arg-auth-token:  
-    description: 'temporary organization auth token for argonaut'
+  auth-key:  
+    description: 'argonaut auth key/clientId'
+    required: true
+  auth-secret:  
+    description: 'argonaut auth pass/secret'
     required: true
   extra-args:
     description: 'extra field that can used for future purpose, format : key1=value1,key2=value2,...'
@@ -42,6 +45,6 @@ runs:
         SHORT_SHA=$(git rev-parse --short HEAD)
         cd ..
         cd argonaut-action/ci/
-        ARG_AUTH_TOKEN="${{ inputs.arg-auth-token }}" go run *.go ${{ inputs.task-id }} ${user_repo_dir}
+        ARG_AUTH_KEY="${{ inputs.auth-key }}" ARG_AUTH_SECRET="${{inputs.auth-secret}}" go run *.go ${{ inputs.task-id }} ${user_repo_dir}
       shell: bash
 

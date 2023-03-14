@@ -5,8 +5,10 @@ variables:
     description: 'task name'
   ref:
     description: 'branch, tag, sha ref to perform build on'
-  arg_auth_token:  
-    description: 'temporary organization auth token for argonaut'
+  auth_key:  
+    description: 'argonaut auth key/clientId'
+  auth_secret:  
+    description: 'argonaut auth pass/secret'
   extra_args:
     description: 'extra field that can used for future purpose, format : key1=value1,key2=value2,...'
 
@@ -33,4 +35,4 @@ dagger-execute:
     - mkdir -m 777 argonaut-action
     - git clone -b main https://github.com/argonautdev/argonaut-action.git
     - cd argonaut-action/ci/
-    - ARG_AUTH_TOKEN="$arg_auth_token" go run *.go $task_id ${user_repo_dir}
+    - ARG_AUTH_KEY="$auth_key" ARG_AUTH_SECRET="$auth_secret" go run *.go $task_id ${user_repo_dir}

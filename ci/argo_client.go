@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
+	"os"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/pretty"
@@ -15,7 +15,7 @@ type ArgoClient interface {
 	FetchBuildRunInfo(buildRunId string) (*BuildRun, error)
 	FetchBuildInfo(buildId string) (*BuildConfig, error)
 	FetchContainerRegistryAccess(crId string) (*RegistryAccess, error)
-	FetchBuildTimeSecrets(buildConfigId string) (*Secrets, error)
+	FetchBuildTimeSecrets(buildConfigId string) (*BuildSecretFetch, error)
 	BuildRunCallback(buildRunId string, payload *BuildRunCallbackPayload) error
 }
 
@@ -50,9 +50,9 @@ func (c *ArgoClientImpl) FetchContainerRegistryAccess(crId string) (*RegistryAcc
 	return &out, err
 }
 
-func (c *ArgoClientImpl) FetchBuildTimeSecrets(buildConfigId string) (*Secrets, error) {
-	out := Secrets{}
-	resp, err := c.R().Get(fmt.Sprintf("/api/v1/secrets", buildConfigId))
+func (c *ArgoClientImpl) FetchBuildTimeSecrets(buildConfigId string) (*BuildSecretFetch, error) {
+	out := BuildSecretFetch{}
+	resp, err := c.R().Get(fmt.Sprintf("/api/v1/build/%s/secrets", buildConfigId))
 	err = UnmarshalAndLog(resp, &out, err)
 	return &out, err
 }
@@ -66,15 +66,16 @@ func GetArgoClient() ArgoClient {
 	return argoClientInstance
 }
 
-func InitializeArgoClient(token string) (ArgoClient, error) {
+func InitializeArgoClient() (ArgoClient, error) {
 
 	argoClient := &ArgoClientImpl{Client: resty.New()}
 
 	switch {
-	case strings.HasPrefix(token, "FE-"):
-		key, secret, ok := ParseBasicAuth(strings.TrimPrefix(token, "FE-"))
-		if !ok {
-			return nil, errors.New("failed to parse auth token")
+	default:
+		key := os.Getenv("ARG_AUTH_KEY")
+		secret := os.Getenv("ARG_AUTH_SECRET")
+		if key == "" || secret == "" {
+			return nil, errors.New("access to argonaut server is not configured")
 		}
 		clientAuthInfo, err := getFEAuthInfo(key, secret)
 		if err != nil {
@@ -83,8 +84,6 @@ func InitializeArgoClient(token string) (ArgoClient, error) {
 		}
 		argoClient.clientAuthInfo = clientAuthInfo
 		argoClient.SetHeader("Authorization", clientAuthInfo.Accesstoken)
-	default:
-		return nil, errors.New("unknown auth scheme")
 	}
 
 	argoClient.SetBaseURL(MIDGARD_URL)

@@ -87,5 +87,17 @@ type RegistryAccess struct {
 	UrlWithPrefix string     `json:"url_with_prefix"`
 }
 
-type Secrets struct {
+//************* Secrets ********************
+type BuildSecretFetch struct {
+	SecretId         string           `json:"secret_id"`
+	BuildSecretsData BuildSecretsData `json:"build_secrets_data"`
+}
+
+type BuildSecretsData struct {
+	Data []BuildSecret `json:"data"`
+}
+
+type BuildSecret struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }

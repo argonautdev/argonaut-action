@@ -31,13 +31,7 @@ func executeTask(ctx context.Context) error {
 
 	fmt.Printf("taskId [%s] userRepoLoc [%s]", taskId, userRepoLoc)
 
-	authToken := os.Getenv("ARG_AUTH_TOKEN")
-
-	if authToken == "" {
-		return errors.New("access to argonaut server is not configured")
-	}
-
-	_, err := InitializeArgoClient(authToken)
+	_, err := InitializeArgoClient()
 	if err != nil {
 		return err
 	}
