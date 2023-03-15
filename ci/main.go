@@ -33,8 +33,11 @@ func executeTask(ctx context.Context) error {
 
 	_, err := InitializeArgoClient()
 	if err != nil {
+		fmt.Printf("Argonaut client setup failed : [%v] \n", err)
 		return err
 	}
+
+	fmt.Printf("Argonaut client setup complete! \n")
 
 	switch {
 	case strings.HasPrefix(taskId, "br-"):

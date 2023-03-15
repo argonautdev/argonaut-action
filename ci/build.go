@@ -30,6 +30,8 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	callbackPayload.ImageTag = shortSha
 
+	fmt.Printf("short sha : [%s]", shortSha)
+
 	buildRunInfo, err := GetArgoClient().FetchBuildRunInfo(buildRunId)
 	if err != nil {
 		callbackPayload.Status = Failed

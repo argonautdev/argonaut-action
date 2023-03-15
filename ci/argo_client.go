@@ -148,6 +148,7 @@ func getFEAuthInfo(key, secret string) (*GetClientIDAndSecretResponse, error) {
 		return nil, err
 	}
 
+	fmt.Print("Authentication successful! \n")
 	return &getClientIDAndSecretResponse, nil
 
 }
