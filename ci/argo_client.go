@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tidwall/pretty"
-	"go.uber.org/zap"
 )
 
 type ArgoClient interface {
@@ -79,7 +78,7 @@ func InitializeArgoClient() (ArgoClient, error) {
 		}
 		clientAuthInfo, err := getFEAuthInfo(key, secret)
 		if err != nil {
-			zap.S().Errorf("Could not construct client (internal err). Err: %v", err)
+			fmt.Printf("Could not construct client (internal err). Err: %v \n", err)
 			return nil, err
 		}
 		argoClient.clientAuthInfo = clientAuthInfo
@@ -90,27 +89,26 @@ func InitializeArgoClient() (ArgoClient, error) {
 
 	argoClient.SetRetryCount(2).
 		AddRetryCondition(func(res *resty.Response, reqErr error) bool {
-			zap.S().Info("Trace Info : ")
+			fmt.Printf("Trace Info :  \n")
 			if res != nil && res.Request != nil {
 				ti := res.Request.TraceInfo()
-				zap.S().Infof("  Content size  : %v", res.Request.Header["Content-Length"])
-				zap.S().Infof("  DNSLookup     : %v", ti.DNSLookup)
-				zap.S().Infof("  ConnTime      : %v", ti.ConnTime)
-				zap.S().Infof("  TCPConnTime   : %v", ti.TCPConnTime)
-				zap.S().Infof("  TLSHandshake  : %v", ti.TLSHandshake)
-				zap.S().Infof("  ServerTime    : %v", ti.ServerTime)
-				zap.S().Infof("  ResponseTime  : %v", ti.ResponseTime)
-				zap.S().Infof("  TotalTime     : %v", ti.TotalTime)
-				zap.S().Infof("  IsConnReused  : %v", ti.IsConnReused)
-				zap.S().Infof("  IsConnWasIdle : %v", ti.IsConnWasIdle)
-				zap.S().Infof("  ConnIdleTime  : %v", ti.ConnIdleTime)
-
-				zap.S().Infof("  Resp Time       :", res.Time())
-				zap.S().Infof("  Resp Received At:", res.ReceivedAt())
+				fmt.Printf("  Content size  : %v  \n", res.Request.Header["Content-Length"])
+				fmt.Printf("  DNSLookup     : %v  \n", ti.DNSLookup)
+				fmt.Printf("  ConnTime      : %v  \n", ti.ConnTime)
+				fmt.Printf("  TCPConnTime   : %v  \n", ti.TCPConnTime)
+				fmt.Printf("  TLSHandshake  : %v  \n", ti.TLSHandshake)
+				fmt.Printf("  ServerTime    : %v  \n", ti.ServerTime)
+				fmt.Printf("  ResponseTime  : %v \n", ti.ResponseTime)
+				fmt.Printf("  TotalTime     : %v \n", ti.TotalTime)
+				fmt.Printf("  IsConnReused  : %v \n", ti.IsConnReused)
+				fmt.Printf("  IsConnWasIdle : %v \n", ti.IsConnWasIdle)
+				fmt.Printf("  ConnIdleTime  : %v \n", ti.ConnIdleTime)
+				fmt.Printf("  Resp Time       : %v \n", res.Time())
+				fmt.Printf("  Resp Received At: %v \n", res.ReceivedAt())
 			}
 
 			if reqErr != nil {
-				zap.S().Errorf("Request trace info for err. Err: %v", reqErr)
+				fmt.Printf("Request trace info for err. Err: %v  \n", reqErr)
 				return true
 				// if errors.Is(reqErr, syscall.ECONNRESET) {
 				// 	zap.S().Error("  Retrying Request!")
@@ -135,18 +133,18 @@ func getFEAuthInfo(key, secret string) (*GetClientIDAndSecretResponse, error) {
 		}).
 		Post("/identity/resources/auth/v1/api-token")
 	if err != nil {
-		zap.S().Errorf("Could not send request. Err: %v", err)
+		fmt.Printf("Could not send request. Err: %v  \n", err)
 		return nil, err
 	}
 	if resp.IsError() {
-		zap.S().Errorf("Could not send request. Err: %v", string(resp.Body()))
+		fmt.Printf("Could not send request. Err: %v  \n", string(resp.Body()))
 		return nil, errors.New("authentication error : " + string(resp.Body()))
 	}
 
 	var getClientIDAndSecretResponse GetClientIDAndSecretResponse
 	err = json.Unmarshal(resp.Body(), &getClientIDAndSecretResponse)
 	if err != nil {
-		zap.S().Error("Could not convert reponse body. The following error occurred: %v", err)
+		fmt.Printf("Could not convert reponse body. The following error occurred: %v \n", err)
 		return nil, err
 	}
 
@@ -161,7 +159,7 @@ func UnmarshalAndLog(resp *resty.Response, out interface{}, err error) error {
 	}
 	err = json.Unmarshal(resp.Body(), out)
 	if err != nil {
-		zap.S().Errorf("Could not parse body, unexpected response type sent from server. Err: %v", err)
+		fmt.Printf("Could not parse body, unexpected response type sent from server. Err: %v  \n", err)
 		return err
 	}
 	return nil
@@ -170,12 +168,12 @@ func UnmarshalAndLog(resp *resty.Response, out interface{}, err error) error {
 
 func LogResponseErrorOrRequestCreationError(resp *resty.Response, err error) error {
 	if err != nil {
-		zap.S().Errorf("Could not send request. Err: %v", err)
+		fmt.Printf("Could not send request. Err: %v  \n", err)
 		return err
 	}
 
 	if resp.IsError() {
-		zap.S().Errorf("Error status from server.\n%v", string(pretty.Color(pretty.Pretty(resp.Body()), nil)))
+		fmt.Printf("Error status from server.\n%v  \n", string(pretty.Color(pretty.Pretty(resp.Body()), nil)))
 		return ErrCodeInResponse
 	}
 

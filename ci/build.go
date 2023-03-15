@@ -13,19 +13,22 @@ import (
 
 func build(context context.Context, buildRunId string, userRepoLoc string) error {
 
-	fmt.Print("build task started!!")
+	fmt.Println("build task started!!")
+
+	callbackPayload := &BuildRunCallbackPayload{
+		Status: Running,
+	}
+
+	defer GetArgoClient().BuildRunCallback(buildRunId, callbackPayload)
 
 	shortSha := os.Getenv("SHORT_SHA")
 
 	if shortSha == "" {
+		callbackPayload.Status = Failed
 		return errors.New("image tag not generated")
 	}
 
-	callbackPayload := &BuildRunCallbackPayload{
-		ImageTag: shortSha,
-	}
-
-	defer GetArgoClient().BuildRunCallback(buildRunId, callbackPayload)
+	callbackPayload.ImageTag = shortSha
 
 	buildRunInfo, err := GetArgoClient().FetchBuildRunInfo(buildRunId)
 	if err != nil {
@@ -33,14 +36,14 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		return err
 	}
 
-	fmt.Println("fetch build run info complete : ", *buildRunInfo)
+	fmt.Printf("fetch build run info complete : [%v] \n", *buildRunInfo)
 
 	buildInfo, err := GetArgoClient().FetchBuildInfo(buildRunInfo.BuildConfigId)
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
 	}
-	fmt.Println("fetch build info complete : ", *buildInfo)
+	fmt.Printf("fetch build info complete : [%v] \n", *buildInfo)
 
 	buildArgs, err := getBuildArgs(buildInfo.Id)
 	if err != nil {
@@ -54,15 +57,16 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		return err
 	}
 
-	fmt.Println("cr access call success : ", crAccess.UrlWithPrefix)
+	fmt.Printf("cr access call success : [%s]  \n", crAccess.UrlWithPrefix)
 
 	execCmd := exec.CommandContext(context, "docker", "login", "--username", crAccess.Username, "--password", crAccess.Password, strings.TrimPrefix(crAccess.Url, "https://"))
 	out, err := execCmd.CombinedOutput()
 	if err != nil {
+		fmt.Printf("docker login failed : [%s]  \n", string(out))
 		return fmt.Errorf(string(out))
 	}
 
-	fmt.Println("docker login complete : ", string(out))
+	fmt.Printf("docker login complete : [%s] \n", string(out))
 
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
@@ -89,7 +93,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	callbackPayload.Status = Completed
 
-	fmt.Printf("build process over: %v\n", ref)
+	fmt.Printf("build process over: %s \n", ref)
 
 	return nil
 }

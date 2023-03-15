@@ -29,7 +29,7 @@ func executeTask(ctx context.Context) error {
 		return errors.New("user repo location missing")
 	}
 
-	fmt.Printf("taskId [%s] userRepoLoc [%s]", taskId, userRepoLoc)
+	fmt.Printf("taskId [%s] userRepoLoc [%s] \n", taskId, userRepoLoc)
 
 	_, err := InitializeArgoClient()
 	if err != nil {
