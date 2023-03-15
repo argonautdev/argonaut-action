@@ -29,10 +29,10 @@ dagger-execute:
     - apk add docker-cli
   script:
     - user_repo_dir=$(pwd)
-    - export SHORT_SHA=$(git rev-parse --short HEAD)
+    - GIT_SHORT_SHA=$(git rev-parse --short HEAD)
     - pwd
     - cd ..
     - mkdir -m 777 argonaut-action
     - git clone -b main https://github.com/argonautdev/argonaut-action.git
     - cd argonaut-action/ci/
-    - ARG_AUTH_KEY="$auth_key" ARG_AUTH_SECRET="$auth_secret" SHORT_SHA=${SHORT_SHA} go run *.go $task_id ${user_repo_dir}
+    - ARG_AUTH_KEY="$auth_key" ARG_AUTH_SECRET="$auth_secret" SHORT_SHA="${GIT_SHORT_SHA}" go run *.go $task_id ${user_repo_dir}
