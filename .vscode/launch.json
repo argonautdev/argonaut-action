@@ -10,9 +10,11 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "args": ["br-arzbjret4v6e867t", "/Users/Ankit/devspace-quickstart-nodejs"],
+            "args": ["br-aays9ywdpun9zr25", "/Users/Ankit/devspace-quickstart-nodejs"],
             "env": {
-                "ARG_AUTH_TOKEN": "FE-Basic ODNkZWFlZDktOGU3My00MmIzLTlkOTQtNjg2Zjg3MGVhNWRmOjFmYjFhYjVlLWYyMTAtNGU4YS1iYmE0LTU3OGI5ODdlN2VlZA=="
+                "ARG_AUTH_KEY": "83deaed9-8e73-42b3-9d94-686f870ea5df",
+                "ARG_AUTH_SECRET": "1fb1ab5e-f210-4e8a-bba4-578b987e7eed",
+                "SHORT_SHA": "test_tag"
             }
         }
     ]

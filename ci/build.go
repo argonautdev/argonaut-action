@@ -52,13 +52,13 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		callbackPayload.Status = Failed
 		return err
 	}
+	fmt.Printf("fetch build args complete : Count[%d] \n", len(buildArgs))
 
 	crAccess, err := GetArgoClient().FetchContainerRegistryAccess(buildInfo.ArtifactoryId)
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
 	}
-
 	fmt.Printf("cr access call success : [%s]  \n", crAccess.UrlWithPrefix)
 
 	execCmd := exec.CommandContext(context, "docker", "login", "--username", crAccess.Username, "--password", crAccess.Password, strings.TrimPrefix(crAccess.Url, "https://"))
@@ -82,6 +82,8 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	image := fmt.Sprintf("%s/%s", strings.TrimPrefix(crAccess.UrlWithPrefix, "https://"), buildInfo.Name)
 	callbackPayload.Image = image
+
+	//workingDir := filepath.Join(userRepoLoc, buildInfo.Details.OCIBuildDetails.WorkingDir)
 
 	contextDir := client.Host().Directory(userRepoLoc)
 
