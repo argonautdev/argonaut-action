@@ -89,31 +89,27 @@ func InitializeArgoClient() (ArgoClient, error) {
 
 	argoClient.SetRetryCount(2).
 		AddRetryCondition(func(res *resty.Response, reqErr error) bool {
-			fmt.Printf("Trace Info :  \n")
-			if res != nil && res.Request != nil {
-				ti := res.Request.TraceInfo()
-				fmt.Printf("  Content size  : %v  \n", res.Request.Header["Content-Length"])
-				fmt.Printf("  DNSLookup     : %v  \n", ti.DNSLookup)
-				fmt.Printf("  ConnTime      : %v  \n", ti.ConnTime)
-				fmt.Printf("  TCPConnTime   : %v  \n", ti.TCPConnTime)
-				fmt.Printf("  TLSHandshake  : %v  \n", ti.TLSHandshake)
-				fmt.Printf("  ServerTime    : %v  \n", ti.ServerTime)
-				fmt.Printf("  ResponseTime  : %v \n", ti.ResponseTime)
-				fmt.Printf("  TotalTime     : %v \n", ti.TotalTime)
-				fmt.Printf("  IsConnReused  : %v \n", ti.IsConnReused)
-				fmt.Printf("  IsConnWasIdle : %v \n", ti.IsConnWasIdle)
-				fmt.Printf("  ConnIdleTime  : %v \n", ti.ConnIdleTime)
-				fmt.Printf("  Resp Time       : %v \n", res.Time())
-				fmt.Printf("  Resp Received At: %v \n", res.ReceivedAt())
-			}
 
 			if reqErr != nil {
 				fmt.Printf("Request trace info for err. Err: %v  \n", reqErr)
+				fmt.Printf("Trace Info :  \n")
+				if res != nil && res.Request != nil {
+					ti := res.Request.TraceInfo()
+					fmt.Printf("  Content size  : %v  \n", res.Request.Header["Content-Length"])
+					fmt.Printf("  DNSLookup     : %v  \n", ti.DNSLookup)
+					fmt.Printf("  ConnTime      : %v  \n", ti.ConnTime)
+					fmt.Printf("  TCPConnTime   : %v  \n", ti.TCPConnTime)
+					fmt.Printf("  TLSHandshake  : %v  \n", ti.TLSHandshake)
+					fmt.Printf("  ServerTime    : %v  \n", ti.ServerTime)
+					fmt.Printf("  ResponseTime  : %v \n", ti.ResponseTime)
+					fmt.Printf("  TotalTime     : %v \n", ti.TotalTime)
+					fmt.Printf("  IsConnReused  : %v \n", ti.IsConnReused)
+					fmt.Printf("  IsConnWasIdle : %v \n", ti.IsConnWasIdle)
+					fmt.Printf("  ConnIdleTime  : %v \n", ti.ConnIdleTime)
+					fmt.Printf("  Resp Time       : %v \n", res.Time())
+					fmt.Printf("  Resp Received At: %v \n", res.ReceivedAt())
+				}
 				return true
-				// if errors.Is(reqErr, syscall.ECONNRESET) {
-				// 	zap.S().Error("  Retrying Request!")
-				// 	return true
-				// }
 			}
 			return false
 		},
