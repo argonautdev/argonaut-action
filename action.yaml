@@ -28,7 +28,7 @@ runs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        path: ${GITHUB_REPOSITORY#*/}
+        path: ${GITHUB_REPOSITORY}
         ref: ${{ inputs.ref }}
         submodules: 'recursive'
     - name: Fetch repo
@@ -41,11 +41,11 @@ runs:
     - name: Run Dagger pipeline
       run: |
         ls -lrt
-        echo ${GITHUB_REPOSITORY#*/}
-        cd ${GITHUB_REPOSITORY#*/}
+        echo ${GITHUB_REPOSITORY}
+        cd ${GITHUB_REPOSITORY}
         user_repo_dir=$(pwd)
         GIT_SHORT_SHA=$(git rev-parse --short HEAD)
-        cd ..
+        cd -
         cd argonaut-action/ci/
         ARG_AUTH_KEY="${{ inputs.auth-key }}" ARG_AUTH_SECRET="${{inputs.auth-secret}}" SHORT_SHA="${GIT_SHORT_SHA}" go run *.go ${{ inputs.task-id }} ${user_repo_dir}
       shell: bash
