@@ -25,10 +25,13 @@ runs:
     - uses: actions/setup-go@v3
       with:
         go-version: 1.18
+    - run: echo ::set-output name=user_repo_name::${GITHUB_REPOSITORY#*/}
+      id: user_repo_vars
+      shell: bash
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        path: ${{GITHUB_REPOSITORY#*/}}
+        path: ${{ steps.user_repo_vars.outputs.user_repo_name }}
         ref: ${{ inputs.ref }}
         submodules: 'recursive'
     - name: Fetch repo
@@ -41,7 +44,6 @@ runs:
     - name: Run Dagger pipeline
       run: |
         ls -lrt
-        echo ${GITHUB_REPOSITORY#*/}
         cd ${GITHUB_REPOSITORY#*/}
         user_repo_dir=$(pwd)
         GIT_SHORT_SHA=$(git rev-parse --short HEAD)
