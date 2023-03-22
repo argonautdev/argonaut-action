@@ -28,7 +28,7 @@ runs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        path: ${GITHUB_REPOSITORY}
+        path: ${{ vars.GITHUB_REPOSITORY }}
         ref: ${{ inputs.ref }}
         submodules: 'recursive'
     - name: Fetch repo
