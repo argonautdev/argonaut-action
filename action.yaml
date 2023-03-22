@@ -28,7 +28,7 @@ runs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        path: $GITHUB_REPOSITORY
+        path: ${{GITHUB_REPOSITORY#*/}}
         ref: ${{ inputs.ref }}
         submodules: 'recursive'
     - name: Fetch repo
@@ -41,8 +41,8 @@ runs:
     - name: Run Dagger pipeline
       run: |
         ls -lrt
-        echo ${GITHUB_REPOSITORY}
-        cd ${GITHUB_REPOSITORY}
+        echo ${GITHUB_REPOSITORY#*/}
+        cd ${GITHUB_REPOSITORY#*/}
         user_repo_dir=$(pwd)
         GIT_SHORT_SHA=$(git rev-parse --short HEAD)
         cd -
