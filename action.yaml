@@ -40,6 +40,8 @@ runs:
         submodules: 'recursive'
     - name: Run Dagger pipeline
       run: |
+        ls -lrt
+        echo ${GITHUB_REPOSITORY#*/}
         cd ${GITHUB_REPOSITORY#*/}
         user_repo_dir=$(pwd)
         GIT_SHORT_SHA=$(git rev-parse --short HEAD)
