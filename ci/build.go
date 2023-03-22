@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"dagger.io/dagger"
@@ -83,9 +84,9 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	image := fmt.Sprintf("%s/%s", strings.TrimPrefix(crAccess.UrlWithPrefix, "https://"), buildInfo.Name)
 	callbackPayload.Image = image
 
-	//workingDir := filepath.Join(userRepoLoc, buildInfo.Details.OCIBuildDetails.WorkingDir)
+	workingDir := filepath.Join(userRepoLoc, buildInfo.Details.OCIBuildDetails.WorkingDir)
 
-	contextDir := client.Host().Directory(userRepoLoc)
+	contextDir := client.Host().Directory(workingDir)
 
 	ref, err := client.Container().
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).

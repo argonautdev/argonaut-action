@@ -34,7 +34,7 @@ type BuildConfig struct {
 }
 
 type BuildConfigDetails struct {
-	OCIBuildDetails *OCIBuildDetails `json:"oci_build_details" validate:"required"`
+	OCIBuildDetails OCIBuildDetails `json:"oci_build_details" validate:"required"`
 }
 
 type OCIBuildDetails struct {
