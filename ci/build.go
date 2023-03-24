@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"dagger.io/dagger"
 )
@@ -90,7 +91,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	ref, err := client.Container().
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).
-		Publish(context, fmt.Sprintf("%s:%s", image, shortSha))
+		Publish(context, fmt.Sprintf("%s:%s", image, fmt.Sprintf("%s-%s", shortSha, time.Now().Format("01020304"))))
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
