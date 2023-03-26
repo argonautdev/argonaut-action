@@ -30,7 +30,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		return errors.New("image tag not generated")
 	}
 
-	callbackPayload.ImageTag = shortSha
+	callbackPayload.ImageTag = fmt.Sprintf("%s-%s", shortSha, time.Now().Format("01020304"))
 
 	fmt.Printf("short sha : [%s]", shortSha)
 
@@ -91,7 +91,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	ref, err := client.Container().
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).
-		Publish(context, fmt.Sprintf("%s:%s", image, fmt.Sprintf("%s-%s", shortSha, time.Now().Format("01020304"))))
+		Publish(context, fmt.Sprintf("%s:%s", image, callbackPayload.ImageTag))
 	if err != nil {
 		callbackPayload.Status = Failed
 		return err
