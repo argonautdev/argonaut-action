@@ -85,7 +85,7 @@ func InitializeArgoClient() (ArgoClient, error) {
 		argoClient.SetHeader("Authorization", clientAuthInfo.Accesstoken)
 	}
 
-	argoClient.SetBaseURL(MIDGARD_URL)
+	argoClient.SetBaseURL(GetMidgardUrl())
 
 	argoClient.SetRetryCount(2).
 		AddRetryCondition(func(res *resty.Response, reqErr error) bool {
@@ -122,7 +122,7 @@ func InitializeArgoClient() (ArgoClient, error) {
 }
 
 func getFEAuthInfo(key, secret string) (*GetClientIDAndSecretResponse, error) {
-	resp, err := resty.New().SetBaseURL(FRONTEGG_URL).R().
+	resp, err := resty.New().SetBaseURL(GetFrontEggUrl()).R().
 		SetBody(&ApiTokenConfigStruct{
 			ClientID:     key,
 			ClientSecret: secret,
