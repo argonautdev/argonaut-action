@@ -154,10 +154,13 @@ func UnmarshalAndLog(resp *resty.Response, out interface{}, err error) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(resp.Body(), out)
-	if err != nil {
-		fmt.Printf("Could not parse body, unexpected response type sent from server. Err: %v  \n", err)
-		return err
+	body := resp.Body()
+	if len(body) > 0 {
+		err = json.Unmarshal(body, out)
+		if err != nil {
+			fmt.Printf("Could not parse body, unexpected response type sent from server. Err: %v  \n", err)
+			return err
+		}
 	}
 	return nil
 
