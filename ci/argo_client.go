@@ -38,7 +38,7 @@ func (c *ArgoClientImpl) FetchBuildInfo(buildId string) (*BuildConfig, error) {
 }
 func (c *ArgoClientImpl) BuildRunCallback(buildRunId string, payload *BuildRunCallbackPayload) error {
 	resp, err := c.R().SetBody(*payload).Post(fmt.Sprintf("/api/v1/build/run/%s/callback", buildRunId))
-	err = UnmarshalAndLog(resp, map[string]interface{}{}, err)
+	err = UnmarshalAndLog(resp, &map[string]interface{}{}, err)
 	return err
 }
 
