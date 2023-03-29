@@ -18,7 +18,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	fmt.Println("build task started!!")
 
 	callbackPayload := &BuildRunCallbackPayload{
-		Status: Running,
+		Status: Failed,
 	}
 
 	defer GetArgoClient().BuildRunCallback(buildRunId, callbackPayload)
@@ -26,7 +26,6 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	shortSha := os.Getenv("SHORT_SHA")
 
 	if shortSha == "" {
-		callbackPayload.Status = Failed
 		return errors.New("image tag not generated")
 	}
 
@@ -36,7 +35,6 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	buildRunInfo, err := GetArgoClient().FetchBuildRunInfo(buildRunId)
 	if err != nil {
-		callbackPayload.Status = Failed
 		return err
 	}
 
@@ -44,24 +42,24 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	buildInfo, err := GetArgoClient().FetchBuildInfo(buildRunInfo.BuildConfigId)
 	if err != nil {
-		callbackPayload.Status = Failed
 		return err
 	}
 	fmt.Printf("fetch build info complete : [%v] \n", *buildInfo)
 
 	buildArgs, err := getBuildArgs(buildInfo.Id)
 	if err != nil {
-		callbackPayload.Status = Failed
 		return err
 	}
 	fmt.Printf("fetch build args complete : Count[%d] \n", len(buildArgs))
 
 	crAccess, err := GetArgoClient().FetchContainerRegistryAccess(buildInfo.ArtifactoryId)
 	if err != nil {
-		callbackPayload.Status = Failed
 		return err
 	}
 	fmt.Printf("cr access call success : [%s]  \n", crAccess.UrlWithPrefix)
+
+	image := fmt.Sprintf("%s/%s", strings.TrimPrefix(crAccess.UrlWithPrefix, "https://"), buildInfo.Name)
+	callbackPayload.Image = image
 
 	execCmd := exec.CommandContext(context, "docker", "login", "--username", crAccess.Username, "--password", crAccess.Password, strings.TrimPrefix(crAccess.Url, "https://"))
 	out, err := execCmd.CombinedOutput()
@@ -75,15 +73,11 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
-		callbackPayload.Status = Failed
 		return err
 	}
 	defer client.Close()
 
 	//cache := client.CacheVolume("argonaut")
-
-	image := fmt.Sprintf("%s/%s", strings.TrimPrefix(crAccess.UrlWithPrefix, "https://"), buildInfo.Name)
-	callbackPayload.Image = image
 
 	workingDir := filepath.Join(userRepoLoc, buildInfo.Details.OCIBuildDetails.WorkingDir)
 
@@ -93,7 +87,6 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).
 		Publish(context, fmt.Sprintf("%s:%s", image, callbackPayload.ImageTag))
 	if err != nil {
-		callbackPayload.Status = Failed
 		return err
 	}
 
