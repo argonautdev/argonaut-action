@@ -70,10 +70,10 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	fmt.Printf("docker login complete : [%s] \n", string(out))
 
-	// os.Setenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s:argo-cache;mode=max", image))
-	// os.Setenv("DOCKER_BUILDKIT", "1")
+	os.Setenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s:argo-cache;mode=max", image))
+	os.Setenv("DOCKER_BUILDKIT", "1")
 
-	// fmt.Printf("docker registry cache variable set to : [%s] \n", os.Getenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG"))
+	fmt.Printf("docker registry cache variable set to : [%s] \n", os.Getenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG"))
 
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
@@ -89,8 +89,6 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	contextDir := client.Host().Directory(workingDir)
 
 	ref, err := client.Container().
-		WithEnvVariable("DOCKER_BUILDKIT", "1").
-		WithEnvVariable("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s:argo-cache;mode=max", image)).
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).
 		Publish(context, fmt.Sprintf("%s:%s", image, callbackPayload.ImageTag))
 	if err != nil {
