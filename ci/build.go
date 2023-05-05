@@ -70,7 +70,9 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	fmt.Printf("docker login complete : [%s] \n", string(out))
 
-	os.Setenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s;mode=min", image))
+	os.Setenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s;mode=max", image))
+
+	fmt.Printf("docker registry cache variable set to : [%s] \n", os.Getenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG"))
 
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
