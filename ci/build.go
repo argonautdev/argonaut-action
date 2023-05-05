@@ -89,8 +89,6 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	contextDir := client.Host().Directory(workingDir)
 
 	ref, err := client.Container().
-		WithEnvVariable("DOCKER_BUILDKIT", "1").
-		WithEnvVariable("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s:argo-cache;mode=max", image)).
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).
 		Publish(context, fmt.Sprintf("%s:%s", image, callbackPayload.ImageTag))
 	if err != nil {
