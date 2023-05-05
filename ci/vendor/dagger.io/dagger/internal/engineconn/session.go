@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,11 +14,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/tools/go/packages"
 )
 
 type cliSessionConn struct {
 	*http.Client
-	childStdin io.Closer
+	childCancel func()
+	childProc   *exec.Cmd
 }
 
 func (c *cliSessionConn) Host() string {
@@ -25,22 +29,69 @@ func (c *cliSessionConn) Host() string {
 }
 
 func (c *cliSessionConn) Close() error {
-	if c.childStdin != nil {
-		return c.childStdin.Close()
+	if c.childCancel != nil && c.childProc != nil {
+		c.childCancel()
+		err := c.childProc.Wait()
+		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				// expected
+				return nil
+			}
+
+			return err
+		}
 	}
 	return nil
 }
 
+func getSDKVersion() string {
+	cfg := &packages.Config{Mode: packages.NeedModule}
+	pkgs, err := packages.Load(cfg, "dagger.io/dagger")
+	if err != nil {
+		return "n/a"
+	}
+
+	// TODO: handle a different workdir
+	// This happens when we change the workdir, which is typical for mage, i.e.
+	// `-w ../..`. There may be no go.mod, or the go.mod at that level does not
+	// have a dager.io/dagger package. We want to come back and address this.
+	module := pkgs[0].Module
+	if module == nil {
+		return "n/a"
+	}
+
+	version := module.Version
+	if len(version) > 0 && version[0] == 'v' {
+		version = version[1:]
+	}
+
+	return version
+}
+
 func startCLISession(ctx context.Context, binPath string, cfg *Config) (_ EngineConn, rerr error) {
 	args := []string{"session"}
-	if cfg.Workdir != "" {
-		args = append(args, "--workdir", cfg.Workdir)
+
+	version := getSDKVersion()
+
+	flagsAndValues := []struct {
+		flag  string
+		value string
+	}{
+		{"--workdir", cfg.Workdir},
+		{"--project", cfg.ConfigPath},
+		{"--label", "dagger.io/sdk.name:go"},
+		{"--label", fmt.Sprintf("dagger.io/sdk.version:%s", version)},
 	}
-	if cfg.ConfigPath != "" {
-		args = append(args, "--project", cfg.ConfigPath)
+
+	for _, pair := range flagsAndValues {
+		if pair.value != "" {
+			args = append(args, pair.flag, pair.value)
+		}
 	}
 
 	env := os.Environ()
+
+	cmdCtx, cmdCancel := context.WithCancel(ctx)
 
 	// Workaround https://github.com/golang/go/issues/22315
 	// Basically, if any other code in this process does fork/exec, it may
@@ -59,19 +110,20 @@ func startCLISession(ctx context.Context, binPath string, cfg *Config) (_ Engine
 	var stderrBuf *bytes.Buffer
 	var childStdin io.WriteCloser
 	for i := 0; i < 10; i++ {
-		proc = exec.CommandContext(ctx, binPath, args...)
+		proc = exec.CommandContext(cmdCtx, binPath, args...)
 		proc.Env = env
-		setPlatformOpts(proc)
 
 		var err error
 		stdout, err = proc.StdoutPipe()
 		if err != nil {
+			cmdCancel()
 			return nil, err
 		}
 		defer stdout.Close() // don't need it after we read the port
 
 		stderrPipe, err := proc.StderrPipe()
 		if err != nil {
+			cmdCancel()
 			return nil, err
 		}
 		if cfg.LogOutput == nil {
@@ -92,8 +144,17 @@ func startCLISession(ctx context.Context, binPath string, cfg *Config) (_ Engine
 		// we don't leak child processes even if this process is SIGKILL'd.
 		childStdin, err = proc.StdinPipe()
 		if err != nil {
+			cmdCancel()
 			return nil, err
 		}
+
+		// Kill the child process by closing stdin, not via SIGKILL, so it has a
+		// chance to drain logs.
+		proc.Cancel = childStdin.Close
+
+		// Set a long timeout to give time for any cache exports to pack layers up
+		// which currently has to happen synchronously with the session.
+		proc.WaitDelay = 300 * time.Second // 5 mins
 
 		if err := proc.Start(); err != nil {
 			if strings.Contains(err.Error(), "text file busy") {
@@ -107,17 +168,15 @@ func startCLISession(ctx context.Context, binPath string, cfg *Config) (_ Engine
 				childStdin = nil
 				continue
 			}
+			cmdCancel()
 			return nil, err
 		}
 		break
 	}
 	if proc == nil {
+		cmdCancel()
 		return nil, fmt.Errorf("failed to start dagger session")
 	}
-	// Wait on the proc, this ensures it doesn't become a zombie in a long-running
-	// process and also ensures that GC won't collect any of its resources (e.g.
-	// pipe fds) until it has exited.
-	go proc.Wait()
 
 	defer func() {
 		if rerr != nil {
@@ -143,20 +202,24 @@ func startCLISession(ctx context.Context, binPath string, cfg *Config) (_ Engine
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(ctx, 300*time.Second) // really long time to account for extensions that need to build, though that path should be optimized in future
-	defer cancel()
 	select {
 	case err := <-paramCh:
 		if err != nil {
+			cmdCancel()
 			return nil, err
 		}
-	case <-ctx.Done():
-		return nil, ctx.Err()
+
+	case <-time.After(300 * time.Second):
+		// really long time to account for extensions that need to build, though
+		// that path should be optimized in future
+		cmdCancel()
+		return nil, fmt.Errorf("timed out waiting for session params")
 	}
 
 	return &cliSessionConn{
-		Client:     defaultHTTPClient(&params),
-		childStdin: childStdin,
+		Client:      defaultHTTPClient(&params),
+		childCancel: cmdCancel,
+		childProc:   proc,
 	}, nil
 }
 

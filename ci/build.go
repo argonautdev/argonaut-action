@@ -70,6 +70,8 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 
 	fmt.Printf("docker login complete : [%s] \n", string(out))
 
+	os.Setenv("_EXPERIMENTAL_DAGGER_CACHE_CONFIG", fmt.Sprintf("type=registry;ref=%s;mode=min", image))
+
 	// initialize Dagger client
 	client, err := dagger.Connect(context, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
