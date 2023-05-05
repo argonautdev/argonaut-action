@@ -88,6 +88,7 @@ func build(context context.Context, buildRunId string, userRepoLoc string) error
 	contextDir := client.Host().Directory(workingDir)
 
 	ref, err := client.Container().
+		WithEnvVariable("DOCKER_BUILDKIT", "1").
 		Build(contextDir, dagger.ContainerBuildOpts{Dockerfile: buildInfo.Details.OCIBuildDetails.DockerFilePath, BuildArgs: buildArgs}).
 		Publish(context, fmt.Sprintf("%s:%s", image, callbackPayload.ImageTag))
 	if err != nil {
