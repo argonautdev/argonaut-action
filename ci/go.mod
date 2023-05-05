@@ -1,6 +1,6 @@
 module github.com/argonautdev/argonaut-action
 
-go 1.18
+go 1.20
 
 require dagger.io/dagger v0.6.1
 
